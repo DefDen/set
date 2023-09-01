@@ -24,7 +24,7 @@ def create_deck(size=81, shuffle=True):
     for i in range(size):
         card = {}
         # multiplicity
-        card[attributes[0]] = i % 3
+        card[attributes[0]] = i % 3 + 1
         # texture
         x = (int(i / 3)) % 3
         if x == 0:
@@ -54,6 +54,26 @@ def create_deck(size=81, shuffle=True):
     if shuffle:
         random.shuffle(deck)
     return deck
+
+def card_to_string(card):
+    """
+    Produces a string representation of a card.
+
+    Produces a string representation of a card.
+
+    Parameters:
+    card (dict): The card to convert to a string.
+
+    Returns:
+    (string): The string representation of the card.
+    """
+    r = ''
+    for a in attributes:
+        r += str(card[a]) + ' '
+    r = r.strip()
+    if card['multiplicity'] == 1:
+        return r
+    return r + 's'
 
 def draw_card(deck, n=1):
     """
@@ -116,7 +136,7 @@ def is_set(s):
         raise TypeError('Set must contain exactly 3 elements, input was ' + str(len(s)) + \
                         ' elements long')
     for attribute in attributes:
-    a, b, c = s[0][attribute], s[1][attribute], s[2][attribute]
+        a, b, c = s[0][attribute], s[1][attribute], s[2][attribute]
         if not ((a == b == c) or (a != b and a != c and b != c)):
             return False
     return True
@@ -132,14 +152,15 @@ def find_sets(board):
     board (list of list of dict): A board of cards
 
     Returns:
-    (list of list of ((int, int), dict)): A list of sets. Each set is a list of tuples containing
-                                          the index of each card on the board and the card itself.
+    (list of list of (int, int)): A list of sets. Each set is a list of tuples containing the index
+                                  of each card.
     """
     spread = list(chain.from_iterable(board))
     spread_sets = _find_sets(spread)
     index_converter = _spread_index_to_board_index(board)
-    board_indices = map(index_converter, [s[0] for s in spread_sets])
-    return zip(board_indices, [s[1] for s in spread_sets])
+    board_indices = [list(map(index_converter, s)) for s in spread_sets]
+    return board_indices
+    #return list(zip(board_indices, [s[1] for s in spread_sets]))
 
 def _find_sets(spread, current_set=[]):
     """
@@ -201,11 +222,5 @@ def _spread_index_to_board_index(board, vertical_flip=False):
         ((int, int)): The corresponding board index.
     """
     if vertical_flip:
-        return lambda spread_index : board_index.append((math.abs((int)(spread_index / len(board[0])) - len(board)), spread_index % len(board[0])))
-    return lambda spread_index : board_index.append(((int)(spread_index / len(board[0])), spread_index % len(board[0])))
-
-deck = create_deck()
-board, deck = create_board(deck)
-sets = find_sets(board)
-print(sets)
-print(len(sets))
+        return lambda spread_index : (math.abs((int)(spread_index / len(board[0])) - len(board)), spread_index % len(board[0]))
+    return lambda spread_index : ((int)(spread_index / len(board[0])), spread_index % len(board[0]))
